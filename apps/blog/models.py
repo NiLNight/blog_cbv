@@ -1,6 +1,7 @@
 from django.db import models
 from django.core.validators import FileExtensionValidator
 from django.contrib.auth.models import User
+from mptt.models import MPTTModel, TreeForeignKey
 
 
 class Post(models.Model):
@@ -16,6 +17,7 @@ class Post(models.Model):
     slug = models.SlugField(verbose_name='URL', max_length=255, unique=True)
     description = models.TextField(verbose_name='Краткое описание', max_length=500)
     text = models.TextField(verbose_name='Полный текст записи')
+    category = TreeForeignKey('Category', on_delete=models.PROTECT, related_name='posts', verbose_name='Категория')
     thumbnail = models.ImageField(default='default.jpg',
                                   verbose_name='Изображение записи',
                                   blank=True,
@@ -27,7 +29,7 @@ class Post(models.Model):
     update = models.DateTimeField(auto_now=True, verbose_name='Время обновления')
     author = models.ForeignKey(to=User, verbose_name='Автор', on_delete=models.SET_DEFAULT, related_name='author_posts',
                                default=1)
-    updater = models.ForeignKey(to=User, verbose_name='Обновил', on_delete=models.SET_DEFAULT,
+    updater = models.ForeignKey(to=User, verbose_name='Обновил', on_delete=models.SET_NULL, null=True,
                                 related_name='updater_posts', blank=True)
     fixed = models.BooleanField(verbose_name='Прикреплено', default=False)
 
@@ -39,4 +41,41 @@ class Post(models.Model):
         verbose_name_plural = 'Статьи'
 
     def __str__(self):
+        return self.title
+
+
+class Category(MPTTModel):
+    """
+    Модель категорий с вложенностью
+    """
+    title = models.CharField(max_length=255, verbose_name='Название категории')
+    slug = models.SlugField(verbose_name='URL категории', max_length=255, blank=True)
+    description = models.TextField(verbose_name='Описание категории', max_length=300)
+    parent = TreeForeignKey(
+        'self',
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='children',
+        verbose_name='Родительская категория'
+    )
+
+    class MPTTMeta:
+        """
+        Сортировка по вложенности
+        """
+        order_insertion_by = ['title']
+
+    class Meta:
+        """
+        Сортировка, название модели в админ панели, таблица с данными
+        """
+        verbose_name = 'Категория'
+        verbose_name_plural = 'Категории'
+        db_table = 'app_categories'
+
+    def __str__(self):
+        """
+        Возвращение заголовка категории
+        """
         return self.title
