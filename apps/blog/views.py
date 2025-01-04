@@ -1,5 +1,6 @@
-from django.views.generic import ListView, DetailView
+from django.views.generic import ListView, DetailView, CreateView
 from apps.blog.models import Post, Category
+from apps.blog.forms import PostCreateForm
 
 
 class PostListView(ListView):
@@ -44,3 +45,21 @@ class PostFromCategory(ListView):
         context = super().get_context_data(**kwargs)
         context['title'] = f'Записи из категории: {self.category.title}'
         return context
+
+
+class PostCreateView(CreateView):
+    """
+    Представление: создание материалов на сайте
+    """
+    model = Post
+    template_name = 'blog/post_create.html'
+    form_class = PostCreateForm
+
+    def get_context_data(self, **kwargs):
+        context = super(PostCreateView, self).get_context_data(**kwargs)
+        context['title'] = 'Добавление статьи на сайт'
+        return context
+
+    def form_valid(self, form):
+        form.instance.author = self.request.user
+        return super().form_valid(form)
