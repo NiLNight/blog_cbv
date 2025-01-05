@@ -1,6 +1,9 @@
 from django.views.generic import ListView, DetailView, CreateView, UpdateView
 from apps.blog.models import Post, Category
 from apps.blog.forms import PostCreateForm, PostUpdateForm
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.messages.views import SuccessMessageMixin
+from apps.services.mixins import AuthorRequiredMixin
 
 
 class PostListView(ListView):
@@ -47,13 +50,14 @@ class PostFromCategory(ListView):
         return context
 
 
-class PostCreateView(CreateView):
+class PostCreateView(LoginRequiredMixin, CreateView):
     """
     Представление: создание материалов на сайте
     """
     model = Post
     template_name = 'blog/post_create.html'
     form_class = PostCreateForm
+    login_url = 'blog:home'
 
     def get_context_data(self, **kwargs):
         context = super(PostCreateView, self).get_context_data(**kwargs)
@@ -65,11 +69,13 @@ class PostCreateView(CreateView):
         return super().form_valid(form)
 
 
-class PostUpdateView(UpdateView):
+class PostUpdateView(AuthorRequiredMixin, SuccessMessageMixin, UpdateView):
     model = Post
     template_name = 'blog/post_update.html'
     context_object_name = 'post'
     form_class = PostUpdateForm
+    login_url = 'blog:home'
+    success_message = 'Запись была успешно обновлена!'
 
     def get_context_data(self, *, object_list=None, **kwargs):
         context = super(PostUpdateView, self).get_context_data(**kwargs)
@@ -77,5 +83,6 @@ class PostUpdateView(UpdateView):
         return context
 
     def form_valid(self, form):
+        form.instance.updater = self.request.user
         form.save()
         return super(PostUpdateView, self).form_valid(form)
