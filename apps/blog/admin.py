@@ -4,7 +4,7 @@ from apps.blog.models import Post, Category, Comment
 
 
 @admin.register(Post)
-class PostAdmin(DjangoMpttAdmin):
+class PostAdmin(admin.ModelAdmin):
     """
     Админ-панель модели записей
     """
