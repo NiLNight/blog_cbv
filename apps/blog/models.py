@@ -10,6 +10,7 @@ class PostManager(models.Manager):
     """
     Кастомный менеджер для модели постов
     """
+
     def get_queryset(self):
         """
         Список постов (SQL запрос с фильтрацией по статусу опубликовано)
@@ -111,3 +112,43 @@ class Category(MPTTModel):
         Возвращение заголовка категории
         """
         return self.title
+
+
+class Comment(MPTTModel):
+    """
+    Модель древовидных комментариев
+    """
+    STATUS_OPTIONS = (
+        ('published', 'Опубликовано'),
+        ('draft', 'Черновик')
+    )
+
+    post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='comments', verbose_name='Запись')
+    author = models.ForeignKey(User, on_delete=models.CASCADE, related_name='comments_author',
+                               verbose_name='Автор комментария')
+    content = models.TextField(verbose_name='Текст комментария', max_length=300)
+    time_created = models.DateTimeField(auto_now_add=True, verbose_name='Время добавления')
+    time_updated = models.DateTimeField(auto_now=True, verbose_name='Время обновления')
+    status = models.CharField(choices=STATUS_OPTIONS, default='published', max_length=10, verbose_name='Статус поста')
+    parent = TreeForeignKey('self', on_delete=models.CASCADE,
+                            related_name='children',
+                            verbose_name='Родительский комментарий',
+                            null=True,
+                            blank=True)
+
+    class MTTMeta:
+        """
+        Сортировка по вложенности
+        """
+        order_insertion_by = ['-time_created']
+
+    class Meta:
+        """
+        Сортировка, название модели в админ панели, таблица в данными
+        """
+        ordering = ['-time_created']
+        verbose_name = 'Комментарий'
+        verbose_name_plural = 'Комментарии'
+
+    def __str__(self):
+        return f'{self.author} - {self.content}'
