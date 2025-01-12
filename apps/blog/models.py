@@ -75,8 +75,11 @@ class Post(models.Model):
     def get_absolute_url(self):
         return reverse('blog:post_detail', kwargs={'slug': self.slug})
 
-    def get_sum_rating(self):
-        return sum([rating.value for rating in self.ratings.all()])
+    def get_likes_count(self):
+        return self.ratings.filter(value=True).count()
+
+    def get_dislikes_count(self):
+        return self.ratings.filter(value=False).count()
 
 
 class Category(MPTTModel):
@@ -168,7 +171,7 @@ class Rating(models.Model):
     """
     post = models.ForeignKey(to=Post, on_delete=models.CASCADE, related_name='ratings', verbose_name='Запись')
     user = models.ForeignKey(to=User, on_delete=models.CASCADE, blank=True, null=True, verbose_name='Пользователь')
-    value = models.IntegerField(choices=[(1, 'Нравится'), (-1, 'Не нравится')], verbose_name='Значение')
+    value = models.BooleanField(default=True, verbose_name='Значение')
     time_create = models.DateTimeField(auto_now_add=True, verbose_name='Время добавления')
     ip_address = models.GenericIPAddressField(verbose_name='IP Адрес')
 

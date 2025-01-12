@@ -151,7 +151,7 @@ class RatingCreateView(View):
 
     def post(self, request, *args, **kwargs):
         post_id = request.POST.get('post_id')
-        value = int(request.POST.get('value'))
+        action = request.POST.get('action')  # 'like' или 'dislike'
         x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
         ip = x_forwarded_for.split(',')[0] if x_forwarded_for else request.META.get('REMOTE_ADDR')
         user = request.user if request.user.is_authenticated else None
@@ -159,14 +159,20 @@ class RatingCreateView(View):
         rating, created = self.model.objects.get_or_create(
             post_id=post_id,
             ip_address=ip,
-            defaults={'value': value, 'user': user},
+            defaults={'value': action == 'like', 'user': user},
         )
 
+        # Если объект уже существует, обновляем его
         if not created:
-            if rating.value == value:
+            if action == 'like' and rating.value or action == 'dislike' and not rating.value:
                 rating.delete()
             else:
-                rating.value = value
+                if action == 'like':
+                    rating.value = True
+                elif action == 'dislike':
+                    rating.value = False
                 rating.user = user
                 rating.save()
-        return JsonResponse({'rating_sum': rating.post.get_sum_rating()})
+        # Возвращаем обновленные счетчики лайков и дизлайков
+        return JsonResponse({'likes_count': rating.post.get_likes_count(),
+                             'dislikes_count': rating.post.get_dislikes_count()})
