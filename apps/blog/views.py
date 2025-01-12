@@ -1,9 +1,9 @@
 from django.http import JsonResponse
 from django.shortcuts import redirect
-from django.views.generic import ListView, DetailView, CreateView, UpdateView
+from django.views.generic import ListView, DetailView, CreateView, UpdateView, View
 from taggit.models import Tag
 
-from apps.blog.models import Post, Category
+from apps.blog.models import Post, Category, Rating
 from apps.blog.forms import PostCreateForm, PostUpdateForm, CommentCreateForm
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
@@ -134,14 +134,39 @@ class PostByTagListView(ListView):
     context_object_name = 'posts'
     paginate_by = 10
     tag = None
-    
+
     def get_queryset(self):
         self.tag = Tag.objects.get(slug=self.kwargs['tag'])
         queryset = Post.objects.filter(tags__slug=self.tag.slug)
         return queryset
-    
+
     def get_context_data(self, **kwargs):
         context = super(PostByTagListView, self).get_context_data(**kwargs)
         context['title'] = f'Статьи по тегу: {self.tag.name}'
         return context
-    
+
+
+class RatingCreateView(View):
+    model = Rating
+
+    def get(self, request, *args, **kwargs):
+        post_id = request.POST.get('post_id')
+        value = int(request.POST.get('value'))
+        x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+        ip = x_forwarded_for.split(',')[0] if x_forwarded_for else request.META.get('REMOTE_ADDR')
+        user = request.user if request.user.is_authenticated else None
+
+        rating, created = self.model.objects.get_or_create(
+            post_id=post_id,
+            ip_address=ip,
+            defaults={'value': value, 'user': user}
+        )
+
+        if not created:
+            if rating.value == value:
+                rating.delete()
+            else:
+                rating.value = value
+                rating.user = user
+                rating.save()
+            return JsonResponse({'rating_sum': rating.post.get_sum_rating()}, status=200)
