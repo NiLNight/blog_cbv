@@ -7,7 +7,8 @@ from config import settings
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('apps.blog.urls')),
-    path('', include('apps.accounts.urls'))
+    path('', include('apps.accounts.urls')),
+    path('ckeditor5/', include('django_ckeditor_5.urls'))
 ]
 
 if settings.DEBUG:

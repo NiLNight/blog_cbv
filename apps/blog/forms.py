@@ -19,6 +19,9 @@ class PostCreateForm(forms.ModelForm):
         for field in self.fields:
             self.fields[field].widget.attrs.update({'class': 'form-control', 'autocomplete': 'off'})
 
+        self.fields['description'].widget.attrs.update({'class': 'form-control django_ckeditor_5'})
+        self.fields['text'].widget.attrs.update({'class': 'form-control django_ckeditor_5'})
+
 
 class PostUpdateForm(forms.ModelForm):
     """
