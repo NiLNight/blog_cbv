@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django_mptt_admin.admin import DjangoMpttAdmin
-from apps.blog.models import Post, Category, Comment
+from apps.blog.models import Post, Category, Comment, Rating
 
 
 @admin.register(Post)
@@ -23,5 +23,13 @@ class CategoryAdmin(DjangoMpttAdmin):
 class CommentAdminPage(DjangoMpttAdmin):
     """
     Админ-панель модели комментариев
+    """
+    pass
+
+
+@admin.register(Rating)
+class RatingAdmin(admin.ModelAdmin):
+    """
+    Админ-панель модели рейтинга
     """
     pass

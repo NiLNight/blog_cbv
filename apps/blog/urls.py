@@ -11,4 +11,5 @@ urlpatterns = [
     path('post/<int:pk>/comments/create/', views.CommentCreateView.as_view(), name='comment_create'),
     path('post/tags/<str:tag>/', views.PostByTagListView.as_view(), name='post_by_tags'),
     path('category/<slug:slug>/', views.PostFromCategory.as_view(), name='post_by_category'),
+    path('rating/', views.RatingCreateView.as_view(), name='rating'),
 ]

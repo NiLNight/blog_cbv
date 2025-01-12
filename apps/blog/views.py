@@ -149,7 +149,7 @@ class PostByTagListView(ListView):
 class RatingCreateView(View):
     model = Rating
 
-    def get(self, request, *args, **kwargs):
+    def post(self, request, *args, **kwargs):
         post_id = request.POST.get('post_id')
         value = int(request.POST.get('value'))
         x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
@@ -159,7 +159,7 @@ class RatingCreateView(View):
         rating, created = self.model.objects.get_or_create(
             post_id=post_id,
             ip_address=ip,
-            defaults={'value': value, 'user': user}
+            defaults={'value': value, 'user': user},
         )
 
         if not created:
@@ -169,4 +169,4 @@ class RatingCreateView(View):
                 rating.value = value
                 rating.user = user
                 rating.save()
-            return JsonResponse({'rating_sum': rating.post.get_sum_rating()}, status=200)
+        return JsonResponse({'rating_sum': rating.post.get_sum_rating()})
