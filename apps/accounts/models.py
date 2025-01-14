@@ -1,3 +1,4 @@
+from django.core.cache import cache
 from django.db import models
 from django.contrib.auth.models import User
 from django.core.validators import FileExtensionValidator
@@ -38,6 +39,13 @@ class Profile(models.Model):
         Возвращение строки
         """
         return self.user.username
+
+    def is_online(self):
+        cache_kay = f'last-seen-{self.user.id}'
+        last_seen = cache.get(cache_kay)
+        if last_seen is not None:
+            return True
+        return False
 
     def get_absolute_url(self):
         """
